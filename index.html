@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Identity Bridge — Angelo Vasquez</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=Instrument+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#070b14;--bg2:#0c1120;--surface:#111827;--surface2:#162032;
+      --border:#1e2a3a;--accent:#38bdf8;--accent2:#818cf8;
+      --green:#34d399;--orange:#fb923c;--red:#f87171;--purple:#c084fc;
+      --text:#e2e8f0;--text2:#64748b;--text3:#94a3b8;
+      --glow:rgba(56,189,248,0.12);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Instrument Sans',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;cursor:none}
+    a{text-decoration:none;color:inherit}
+
+    .cur{width:10px;height:10px;background:var(--accent);border-radius:50%;position:fixed;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:transform .15s}
+    .cur-r{width:32px;height:32px;border:1px solid rgba(56,189,248,.3);border-radius:50%;position:fixed;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .18s,height .18s}
+    body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(56,189,248,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(56,189,248,.022) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0}
+
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.1rem 3rem;background:rgba(7,11,20,.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+    .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;letter-spacing:-.02em}
+    .logo span{color:var(--accent)}
+    .nav-l{display:flex;gap:1.75rem;list-style:none}
+    .nav-l a{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;transition:color .2s;position:relative}
+    .nav-l a::after{content:'';position:absolute;bottom:-3px;left:0;width:0;height:1px;background:var(--accent);transition:width .2s}
+    .nav-l a:hover{color:var(--accent)}
+    .nav-l a:hover::after{width:100%}
+    .nav-btn{font-family:'IBM Plex Mono',monospace;font-size:.68rem;padding:.4rem 1rem;border:1px solid var(--accent);color:var(--accent);border-radius:4px;letter-spacing:.05em;transition:background .2s,color .2s}
+    .nav-btn:hover{background:var(--accent);color:var(--bg)}
+
+    .page{position:relative;z-index:2;max-width:1000px;margin:0 auto;padding:8rem 3rem 5rem}
+
+    /* BREADCRUMB */
+    .bc{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--text2);letter-spacing:.06em;display:flex;align-items:center;gap:.5rem;margin-bottom:2rem;opacity:0;animation:fu .5s ease .1s forwards}
+    .bc a{color:var(--text2);transition:color .2s}.bc a:hover{color:var(--accent)}
+    .bc-sep{color:var(--border)}
+
+    /* HERO */
+    .ptag{display:inline-flex;align-items:center;gap:.3rem;font-family:'IBM Plex Mono',monospace;font-size:.64rem;padding:.16rem .52rem;border-radius:999px;margin-bottom:.8rem;letter-spacing:.04em}
+    .tc{background:rgba(129,140,248,.1);color:var(--accent2);border:1px solid rgba(129,140,248,.18)}
+    .tg{background:rgba(56,189,248,.1);color:var(--accent);border:1px solid rgba(56,189,248,.18)}
+    .tw{background:rgba(251,146,60,.1);color:var(--orange);border:1px solid rgba(251,146,60,.18)}
+    .tag-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.25rem;opacity:0;animation:fu .5s ease .2s forwards}
+    .ph{font-family:'Syne',sans-serif;font-size:clamp(2.2rem,5vw,4rem);font-weight:800;letter-spacing:-.045em;line-height:.95;margin-bottom:1rem;opacity:0;animation:fu .5s ease .3s forwards}
+    .ph .hl{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .psub{font-size:.98rem;color:var(--text3);line-height:1.8;max-width:620px;margin-bottom:2.5rem;opacity:0;animation:fu .5s ease .45s forwards}
+    .pmeta{display:flex;gap:2rem;flex-wrap:wrap;padding-top:1.5rem;border-top:1px solid var(--border);opacity:0;animation:fu .5s ease .55s forwards}
+    .pm-item .pm-l{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.2rem}
+    .pm-item .pm-v{font-size:.88rem;color:var(--text3)}
+
+    /* SECTIONS */
+    .sec{margin-top:4rem;padding-top:4rem;border-top:1px solid var(--border)}
+    .sl{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--accent);letter-spacing:.14em;text-transform:uppercase;margin-bottom:.8rem;display:flex;align-items:center;gap:.65rem}
+    .sl::before{content:'';width:20px;height:1px;background:var(--accent)}
+    .st{font-family:'Syne',sans-serif;font-size:clamp(1.4rem,3vw,2rem);font-weight:700;letter-spacing:-.03em;margin-bottom:.6rem}
+    .sp{font-size:.92rem;color:var(--text3);line-height:1.8;margin-bottom:1.25rem}
+
+    /* GAP GRID */
+    .gap-g{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border-radius:12px;overflow:hidden;margin:1.75rem 0}
+    .gap-c{background:var(--surface);padding:1.25rem 1.5rem}
+    .gap-c .gl{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.4rem}
+    .gap-c .gt{font-size:.95rem;font-weight:600;font-family:'Syne',sans-serif;margin-bottom:.35rem}
+    .gap-c .gb{font-size:.82rem;color:var(--text2);line-height:1.65}
+
+    /* ARCH FLOW */
+    .arch{display:flex;align-items:center;gap:0;overflow-x:auto;padding:.25rem 0 1rem;margin:1.75rem 0}
+    .an{flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem 1.1rem;text-align:center;min-width:115px;transition:border-color .2s}
+    .an:hover{border-color:rgba(56,189,248,.3)}
+    .an-ico{font-size:1.15rem;margin-bottom:.3rem}
+    .an-t{font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;color:var(--text)}
+    .an-s{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--text2);margin-top:.15rem;line-height:1.4}
+    .an.hl-node{border-color:rgba(129,140,248,.35);background:rgba(129,140,248,.05)}
+    .arr{flex-shrink:0;color:var(--accent);font-size:.9rem;padding:0 .5rem;opacity:.7}
+
+    /* TECH PILLS */
+    .tech-row{display:flex;gap:.32rem;flex-wrap:wrap;margin:1.25rem 0}
+    .tp{font-family:'IBM Plex Mono',monospace;font-size:.63rem;padding:.16rem .48rem;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:4px;color:var(--text2)}
+
+    /* DEMO SHELL */
+    .demo-shell{border:1px solid var(--border);border-radius:14px;overflow:hidden;margin:1.75rem 0;background:var(--surface)}
+    .demo-bar{background:var(--bg2);padding:.65rem 1rem;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid var(--border)}
+    .demo-dot{width:9px;height:9px;border-radius:50%}
+    .demo-url{flex:1;font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:var(--text2);text-align:center;letter-spacing:.04em}
+    .demo-inner{background:#f8fafc;padding:1.5rem}
+
+    /* DEMO STYLES (light surface) */
+    .ib-nav{display:flex;gap:4px;padding:0 0 1.25rem;border-bottom:1px solid #e5e7eb;margin-bottom:1.5rem}
+    .ib-nav button{padding:6px 16px;font-size:13px;border-radius:6px;border:1px solid #e5e7eb;background:transparent;color:#6b7280;cursor:pointer;font-family:'Instrument Sans',sans-serif;transition:all .15s}
+    .ib-nav button.ia{background:#fff;color:#111;border-color:#d1d5db;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+    .ib-nav button:hover:not(.ia){background:#f9fafb}
+    .ib-s{display:none}.ib-s.ion{display:block}
+    .ib-lbl{font-size:11px;color:#9ca3af;margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-family:'IBM Plex Mono',monospace}
+    .ib-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:1rem 1.25rem}
+    .ib-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;font-family:'IBM Plex Mono',monospace}
+    .bb{background:#eff6ff;color:#1d4ed8}.bg{background:#f0fdf4;color:#166534}
+    .ba{background:#fffbeb;color:#92400e}.br{background:#fef2f2;color:#991b1b}
+    .bgr{background:#f9fafb;color:#6b7280;border:1px solid #e5e7eb}
+    .ib-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;font-family:'IBM Plex Mono',monospace}
+    .ab{background:#eff6ff;color:#1d4ed8}.at{background:#f0fdf4;color:#0f766e}
+    .ap{background:#faf5ff;color:#6d28d9}.ac{background:#fff7ed;color:#c2410c}
+    .aa{background:#fffbeb;color:#b45309}
+    .ib-row{display:flex;align-items:center;gap:12px}
+    .ib-fr{display:grid;grid-template-columns:130px 1fr;gap:8px;padding:5px 0;font-size:13px;border-bottom:1px solid #f3f4f6;font-family:'Instrument Sans',sans-serif}
+    .ib-fr:last-child{border-bottom:none}
+    .ifl{color:#9ca3af}
+    .ib-ar{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid #f3f4f6;cursor:pointer}
+    .ib-ar:last-child{border-bottom:none}
+    .ib-ar:hover{background:#fafafa}
+    .ib-ad{display:none;background:#f9fafb;border-radius:8px;padding:12px;margin-top:8px;margin-left:52px;font-family:'Instrument Sans',sans-serif}
+    .ib-ad.io{display:block}
+    .ib-anr{padding:10px 14px;border-radius:8px;border:1px solid #e5e7eb;margin-bottom:8px;cursor:pointer;background:#fff}
+    .ib-anr:hover{border-color:#6366f1;background:#fafafa}
+    .ib-sb{height:3px;border-radius:2px;margin-top:6px}
+    .ib-tl{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+    .ib-ti{display:flex;gap:10px;align-items:flex-start;font-size:12px}
+    .ib-td{width:7px;height:7px;border-radius:50%;margin-top:3px;flex-shrink:0}
+    .ib-sg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.25rem}
+    .ib-st{background:#f9fafb;border-radius:8px;padding:10px 12px}
+    .ib-sn{font-size:22px;font-weight:600;line-height:1;font-family:'Syne',sans-serif}
+    .ib-sl{font-size:11px;color:#9ca3af;margin-top:3px;font-family:'IBM Plex Mono',monospace}
+    .ib-ei{font-size:10px;color:#d1d5db;transition:transform .2s;display:inline-block}
+    .ib-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+    .ib-ht{font-size:17px;font-weight:600;color:#111;font-family:'Syne',sans-serif}
+    .ib-hs{font-size:13px;color:#9ca3af;margin-bottom:1.5rem;font-family:'Instrument Sans',sans-serif}
+
+    /* FEATURE GRID */
+    .feat-g{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:1.75rem 0}
+    .feat-c{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.25rem;transition:border-color .25s,transform .25s}
+    .feat-c:hover{border-color:rgba(56,189,248,.3);transform:translateY(-3px)}
+    .feat-ico{font-size:1.4rem;margin-bottom:.65rem;display:block}
+    .feat-t{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:.35rem}
+    .feat-b{font-size:.82rem;color:var(--text2);line-height:1.65}
+
+    /* STATUS BOX */
+    .status-b{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.5rem;display:flex;gap:2rem;flex-wrap:wrap;margin:1.75rem 0}
+    .si .si-l{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.25rem}
+    .si .si-v{font-size:.9rem;color:var(--text3)}
+
+    /* BACK */
+    .back{margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border)}
+    .back-a{display:inline-flex;align-items:center;gap:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--text2);padding:.5rem 1rem;border:1px solid var(--border);border-radius:4px;letter-spacing:.04em;transition:all .2s}
+    .back-a:hover{color:var(--accent);border-color:var(--accent)}
+
+    .orb{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0}
+    @keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fl{0%,100%{transform:translateY(0)}50%{transform:translateY(-26px)}}
+    .reveal{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease}
+    .reveal.visible{opacity:1;transform:translateY(0)}
+
+    @media(max-width:768px){
+      nav{padding:1rem 1.5rem}.nav-l{display:none}
+      .page{padding:7rem 1.5rem 4rem}
+      .gap-g{grid-template-columns:1fr}
+      .feat-g{grid-template-columns:1fr}
+      .arch{flex-direction:column;align-items:flex-start}
+      .arr{transform:rotate(90deg)}
+    }
+  </style>
+</head>
+<body>
+
+<div class="cur" id="cur"></div>
+<div class="cur-r" id="curR"></div>
+
+<nav>
+  <a href="https://angelovasquez.net" class="logo">AV<span>.</span></a>
+  <ul class="nav-l">
+    <li><a href="https://angelovasquez.net#projects">Projects</a></li>
+    <li><a href="https://angelovasquez.net#genai">Gen AI</a></li>
+    <li><a href="https://angelovasquez.net#experience">Experience</a></li>
+  </ul>
+  <a href="https://angelovasquez.net#contact" class="nav-btn">Contact</a>
+</nav>
+
+<div class="page" style="position:relative">
+  <div class="orb" style="width:400px;height:400px;background:rgba(56,189,248,.045);top:-80px;right:-80px;animation:fl 9s ease-in-out infinite"></div>
+  <div class="orb" style="width:260px;height:260px;background:rgba(129,140,248,.035);bottom:200px;left:60px;animation:fl 11s ease-in-out infinite reverse"></div>
+
+  <!-- BREADCRUMB -->
+  <div class="bc">
+    <a href="https://angelovasquez.net">angelovasquez.net</a>
+    <span class="bc-sep">/</span>
+    <a href="https://angelovasquez.net#projects">projects</a>
+    <span class="bc-sep">/</span>
+    <span style="color:var(--text3)">identity-bridge</span>
+  </div>
+
+  <!-- HERO -->
+  <div class="tag-row">
+    <span class="ptag tc">⬡ Security</span>
+    <span class="ptag tc">⬡ AI</span>
+    <span class="ptag tg">◈ Concept Demo</span>
+  </div>
+  <h1 class="ph">Identity <span class="hl">Bridge</span></h1>
+  <p class="psub">A SOC intelligence tool that unifies physical identity (OnGuard PACS) with digital identity (SSO/Active Directory) — enabling real-time identity resolution, SIEM alert enrichment, and cross-correlation anomaly detection.</p>
+  <div class="pmeta">
+    <div class="pm-item"><div class="pm-l">Domain</div><div class="pm-v">Security Operations</div></div>
+    <div class="pm-item"><div class="pm-l">Stack</div><div class="pm-v">OnGuard OpenAccess API · AD/LDAP · SIEM middleware</div></div>
+    <div class="pm-item"><div class="pm-l">Status</div><div class="pm-v">Concept prototype · Pending API access</div></div>
+  </div>
+
+  <!-- THE PROBLEM -->
+  <div class="sec reveal">
+    <div class="sl">The problem</div>
+    <h2 class="st">A gap every SOC lives with</h2>
+    <p class="sp">When a SIEM alert fires, it contains a username — <code style="font-family:'IBM Plex Mono',monospace;font-size:.82em;background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.15);padding:2px 7px;border-radius:4px;color:var(--accent)">jsmith</code> — and little else. The analyst manually cross-references directories, badge systems, and HR records to answer one basic question: <em style="color:var(--text)">who is this person, and where are they right now?</em></p>
+    <p class="sp">The physical access control system — LenelS2 OnGuard — already holds the answer. Name, department, badge ID, access tier, photo, last physical location. The data exists. It just lives in a separate silo, accessible only by clicking through a UI one record at a time.</p>
+    <div class="gap-g">
+      <div class="gap-c">
+        <div class="gl">Physical identity — OnGuard</div>
+        <div class="gt">Badge scans, cardholder records</div>
+        <div class="gb">Full name · department · access level · badge ID · photo · physical location history</div>
+      </div>
+      <div class="gap-c">
+        <div class="gl">Digital identity — AD / SSO</div>
+        <div class="gt">Usernames, login events</div>
+        <div class="gb">SSO username · login timestamps · source IP · auth failures · session data</div>
+      </div>
+      <div class="gap-c" style="border-top:1px solid var(--border)">
+        <div class="gl">What analysts get today</div>
+        <div class="gt" style="color:var(--red)">Fragmented, manual, slow</div>
+        <div class="gb">Alert fires → analyst manually looks up username → cross-references OnGuard → builds context by hand</div>
+      </div>
+      <div class="gap-c" style="border-top:1px solid var(--border)">
+        <div class="gl">What Identity Bridge provides</div>
+        <div class="gt" style="color:var(--green)">Unified, automatic, real-time</div>
+        <div class="gb">Alert fires → middleware resolves identity → full context delivered instantly, anomalies flagged automatically</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARCHITECTURE -->
+  <div class="sec reveal">
+    <div class="sl">Architecture</div>
+    <h2 class="st">How it works</h2>
+    <p class="sp">A lightweight middleware layer — no modification to existing OnGuard or SIEM infrastructure required. It reads from both systems, resolves identity mappings, and surfaces enriched context to analysts.</p>
+    <div class="arch">
+      <div class="an"><div class="an-ico">🏢</div><div class="an-t">OnGuard</div><div class="an-s">OpenAccess API<br>Cardholder data</div></div>
+      <div class="arr">→</div>
+      <div class="an hl-node"><div class="an-ico">⚙️</div><div class="an-t">Identity Bridge</div><div class="an-s">SSO ↔ badge<br>mapping layer</div></div>
+      <div class="arr">←</div>
+      <div class="an"><div class="an-ico">🔑</div><div class="an-t">AD / SSO</div><div class="an-s">LDAP / Azure AD<br>Login events</div></div>
+      <div class="arr">→</div>
+      <div class="an hl-node"><div class="an-ico">⚙️</div><div class="an-t">Identity Bridge</div><div class="an-s">Anomaly engine<br>Alert enrichment</div></div>
+      <div class="arr">→</div>
+      <div class="an"><div class="an-ico">📡</div><div class="an-t">SIEM / SOC</div><div class="an-s">Enriched alerts<br>Analyst dashboard</div></div>
+    </div>
+    <div class="tech-row">
+      <span class="tp">OnGuard OpenAccess REST API</span>
+      <span class="tp">LenelS2 DataConduIT</span>
+      <span class="tp">LDAP / Azure AD</span>
+      <span class="tp">Python middleware</span>
+      <span class="tp">Splunk / SIEM integration</span>
+      <span class="tp">Rule-based anomaly engine</span>
+      <span class="tp">OnGuard 8.x</span>
+    </div>
+  </div>
+
+  <!-- DEMO -->
+  <div class="sec reveal">
+    <div class="sl">Interactive demo</div>
+    <h2 class="st">Try the prototype</h2>
+    <p class="sp">All three layers of the system demonstrated with realistic mock data modeled after actual OnGuard cardholder schema and SOC alert patterns.</p>
+
+    <div class="demo-shell">
+      <div class="demo-bar">
+        <div class="demo-dot" style="background:#f87171"></div>
+        <div class="demo-dot" style="background:#fb923c"></div>
+        <div class="demo-dot" style="background:#34d399"></div>
+        <div class="demo-url">identity-bridge · soc-demo · mock data</div>
+      </div>
+      <div class="demo-inner">
+
+        <div class="ib-hd">
+          <span class="ib-ht">Identity Bridge</span>
+          <span class="ib-badge bb">OnGuard + AD/SSO</span>
+        </div>
+        <p class="ib-hs">Physical identity ↔ digital identity, unified for SOC analysts</p>
+
+        <div class="ib-nav">
+          <button class="ia" onclick="ibTab('lu',this)">Identity lookup</button>
+          <button onclick="ibTab('en',this)">Alert enrichment</button>
+          <button onclick="ibTab('an',this)">Anomaly detection</button>
+        </div>
+
+        <div id="ib-lu" class="ib-s ion">
+          <p class="ib-lbl">Search by SSO username, full name, or badge ID</p>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:1.25rem">
+            <input type="text" id="ibq" placeholder="e.g. jsmith, John Smith, or B-04821"
+              style="flex:1;padding:8px 12px;font-size:14px;border:1px solid #e5e7eb;border-radius:6px;outline:none;font-family:'Instrument Sans',sans-serif;color:#111"
+              oninput="ibSearch()" />
+            <span style="font-size:12px;color:#9ca3af;font-family:'IBM Plex Mono',monospace" id="ibst">type to search</span>
+          </div>
+          <div id="ibres"></div>
+        </div>
+
+        <div id="ib-en" class="ib-s">
+          <div class="ib-sg">
+            <div class="ib-st"><div class="ib-sn" style="color:#1d4ed8">12</div><div class="ib-sl">Active alerts today</div></div>
+            <div class="ib-st"><div class="ib-sn" style="color:#166534">9</div><div class="ib-sl">Identities resolved</div></div>
+            <div class="ib-st"><div class="ib-sn" style="color:#92400e">3</div><div class="ib-sl">Pending enrichment</div></div>
+          </div>
+          <p class="ib-lbl">Recent SIEM alerts — click to expand identity context</p>
+          <div class="ib-card" id="ibaf"></div>
+        </div>
+
+        <div id="ib-an" class="ib-s">
+          <div class="ib-sg">
+            <div class="ib-st"><div class="ib-sn" style="color:#991b1b">2</div><div class="ib-sl">Critical anomalies</div></div>
+            <div class="ib-st"><div class="ib-sn" style="color:#92400e">5</div><div class="ib-sl">Warnings flagged</div></div>
+            <div class="ib-st"><div class="ib-sn" style="color:#166534">148</div><div class="ib-sl">Clean events today</div></div>
+          </div>
+          <p class="ib-lbl">Physical vs digital cross-correlation flags</p>
+          <div id="ibanf"></div>
+        </div>
+      </div>
+    </div>
+    <p style="font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:var(--text2);margin-top:.75rem;letter-spacing:.03em">↑ Illustrative mock data structured around actual OnGuard cardholder schema. No real PII is present.</p>
+  </div>
+
+  <!-- FEATURES -->
+  <div class="sec reveal">
+    <div class="sl">Capabilities</div>
+    <h2 class="st">Three layers, one tool</h2>
+    <div class="feat-g">
+      <div class="feat-c">
+        <span class="feat-ico">🔍</span>
+        <div class="feat-t">Identity resolution</div>
+        <div class="feat-b">Resolve any SSO username, real name, or badge ID to a unified identity record — pulling from OnGuard cardholder data and AD in a single query.</div>
+      </div>
+      <div class="feat-c">
+        <span class="feat-ico">⚡</span>
+        <div class="feat-t">Alert enrichment</div>
+        <div class="feat-b">SIEM alerts enriched automatically with physical context: where the person badged in, access tier, and analyst recommendation generated per alert.</div>
+      </div>
+      <div class="feat-c">
+        <span class="feat-ico">🚨</span>
+        <div class="feat-t">Anomaly detection</div>
+        <div class="feat-b">Cross-correlates badge and SSO events to surface impossible travel, off-hours access, credential sharing, and active sessions with no physical presence.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS -->
+  <div class="sec reveal">
+    <div class="sl">Project status</div>
+    <h2 class="st">Where this stands</h2>
+    <p class="sp">This project started as a concept with a SOC team encountering this exact identity gap daily. The prototype demonstrates the full workflow; production deployment is gated on completing the OnGuard upgrade and securing OpenAccess API licensing.</p>
+    <div class="status-b">
+      <div class="si"><div class="si-l">Current phase</div><div class="si-v">Concept prototype</div></div>
+      <div class="si"><div class="si-l">OnGuard target</div><div class="si-v">v8.2 / 8.3 (upgrade in progress)</div></div>
+      <div class="si"><div class="si-l">Blocker</div><div class="si-v">OpenAccess API license</div></div>
+      <div class="si"><div class="si-l">Next step</div><div class="si-v">API access + AD source confirmed</div></div>
+    </div>
+  </div>
+
+  <div class="back reveal">
+    <a href="https://angelovasquez.net#projects" class="back-a">← Back to all projects</a>
+  </div>
+</div>
+
+<script>
+const D=[
+  {sso:"jsmith",name:"John Smith",badge:"B-04821",dept:"IT Security",title:"SOC Analyst",phone:"x4421",email:"j.smith@corp.com",access:"Tier 2 — SOC Floor, Server Room A",status:"active",lb:"Today 08:47 — Main Entrance",ll:"Today 09:02 — Workstation WS-114",photo:"JS",av:"ab"},
+  {sso:"mramirez",name:"Maria Ramirez",badge:"B-03317",dept:"Network Security",title:"Sr. Network Analyst",phone:"x3890",email:"m.ramirez@corp.com",access:"Tier 3 — SOC Floor, NOC, Data Center",status:"active",lb:"Today 07:55 — Parking Garage B",ll:"Today 08:10 — VPN Remote",photo:"MR",av:"at"},
+  {sso:"dchen",name:"David Chen",badge:"B-05102",dept:"Threat Intel",title:"Threat Intelligence Analyst",phone:"x5031",email:"d.chen@corp.com",access:"Tier 2 — SOC Floor",status:"active",lb:"Yesterday 17:44 — Main Exit",ll:"Today 06:31 — Remote IP 203.0.113.55",photo:"DC",av:"ap"},
+  {sso:"aparker",name:"Ashley Parker",badge:"B-02088",dept:"Incident Response",title:"IR Lead",phone:"x2210",email:"a.parker@corp.com",access:"Tier 3 — All SOC Zones",status:"active",lb:"Today 09:15 — SOC Floor Door",ll:"Today 09:18 — Workstation WS-201",photo:"AP",av:"ac"},
+  {sso:"tnguy",name:"Thomas Nguyen",badge:"B-06644",dept:"IT Security",title:"Junior SOC Analyst",phone:"x6712",email:"t.nguyen@corp.com",access:"Tier 1 — SOC Floor",status:"inactive",lb:"3 days ago 16:22 — Main Exit",ll:"3 days ago 16:05 — Workstation WS-109",photo:"TN",av:"aa"}
+];
+
+function ibSearch(){
+  const q=document.getElementById("ibq").value.toLowerCase().trim();
+  const st=document.getElementById("ibst");
+  const res=document.getElementById("ibres");
+  if(!q){res.innerHTML="";st.textContent="type to search";return;}
+  const found=D.filter(u=>u.sso.includes(q)||u.name.toLowerCase().includes(q)||u.badge.toLowerCase().includes(q));
+  st.textContent=found.length+" result"+(found.length!==1?"s":"");
+  if(!found.length){res.innerHTML='<p style="font-size:13px;color:#9ca3af;margin-top:.5rem">No identity records matched.</p>';return;}
+  res.innerHTML=found.map(u=>`<div class="ib-card" style="margin-top:.5rem">
+    <div class="ib-row" style="margin-bottom:12px">
+      <div class="ib-av ${u.av}">${u.photo}</div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:15px;font-weight:600;color:#111;font-family:'Syne',sans-serif">${u.name}</span>
+          <span class="ib-badge ${u.status==="active"?"bg":"bgr"}">${u.status}</span>
+        </div>
+        <div style="font-size:13px;color:#9ca3af">${u.title} — ${u.dept}</div>
+      </div>
+    </div>
+    <div class="ib-fr"><span class="ifl">SSO username</span><span style="font-weight:600;font-family:'IBM Plex Mono',monospace">${u.sso}</span></div>
+    <div class="ib-fr"><span class="ifl">Badge ID</span><span style="font-family:'IBM Plex Mono',monospace">${u.badge}</span></div>
+    <div class="ib-fr"><span class="ifl">Email</span><span>${u.email}</span></div>
+    <div class="ib-fr"><span class="ifl">Phone ext.</span><span>${u.phone}</span></div>
+    <div class="ib-fr"><span class="ifl">Access level</span><span>${u.access}</span></div>
+    <div class="ib-fr"><span class="ifl">Last badge scan</span><span style="color:#1d4ed8">${u.lb}</span></div>
+    <div class="ib-fr"><span class="ifl">Last SSO login</span><span style="color:#166534">${u.ll}</span></div>
+  </div>`).join("");
+}
+
+const AL=[
+  {id:1,t:"09:44",sv:"high",type:"Multiple failed authentications",raw:"User jsmith — 7 failed SSO attempts in 4 min",sso:"jsmith",ok:true,en:{loc:"Workstation WS-114, SOC Floor",badge:"Badged in at 08:47",note:"User is physically present. May be a locked account. Recommend password reset check before escalating."}},
+  {id:2,t:"09:31",sv:"critical",type:"Off-hours remote access",raw:"User dchen — VPN login at 06:31 from 203.0.113.55",sso:"dchen",ok:true,en:{loc:"No badge scan today — last physical presence was yesterday",badge:"Not on premises",note:"Login precedes first badge scan. External IP. Flag for review — possible credential misuse."}},
+  {id:3,t:"08:55",sv:"medium",type:"Privileged resource access",raw:"User mramirez — accessed Data Center config panel",sso:"mramirez",ok:true,en:{loc:"Badged into NOC at 08:22",badge:"Physical access confirmed",note:"Tier 3 clearance. Physical presence in NOC aligns with digital access. Low priority."}},
+  {id:4,t:"08:10",sv:"high",type:"Anomalous login location",raw:"User tnguy — login attempt from IP 198.51.100.7",sso:"tnguy",ok:false,en:null},
+  {id:5,t:"07:48",sv:"medium",type:"Badge+SSO mismatch",raw:"Badge B-02088 scanned — no corresponding SSO session",sso:"aparker",ok:true,en:{loc:"SOC Floor Door at 09:15",badge:"Badge confirmed active",note:"SSO session started 3 min after badge scan. Normal pattern — no action needed."}}
+];
+function svc(s){return s==="critical"?"br":s==="high"?"ba":"bgr"}
+function renderAlerts(){
+  document.getElementById("ibaf").innerHTML=AL.map(a=>{
+    const u=D.find(u=>u.sso===a.sso);
+    const eb=a.ok&&a.en?`<div class="ib-ad" id="iad-${a.id}">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div><div style="font-size:11px;color:#9ca3af">Full name</div><div style="font-size:13px;font-weight:600">${u?u.name:"Unknown"}</div></div>
+        <div><div style="font-size:11px;color:#9ca3af">Department</div><div style="font-size:13px">${u?u.dept:"—"}</div></div>
+        <div><div style="font-size:11px;color:#9ca3af">Badge location</div><div style="font-size:13px;color:#1d4ed8">${a.en.loc}</div></div>
+        <div><div style="font-size:11px;color:#9ca3af">Badge status</div><div style="font-size:13px">${a.en.badge}</div></div>
+      </div>
+      <div style="background:#fff;border-radius:6px;padding:8px 10px;border:1px solid #e5e7eb">
+        <div style="font-size:11px;color:#9ca3af;margin-bottom:3px">Analyst recommendation</div>
+        <div style="font-size:13px">${a.en.note}</div>
+      </div>
+    </div>`:`<div class="ib-ad" id="iad-${a.id}"><span style="font-size:13px;color:#9ca3af">Identity enrichment pending — SSO not yet resolved.</span></div>`;
+    return`<div class="ib-ar" onclick="tgAlert(${a.id})">
+      <div style="min-width:50px;padding-top:2px">
+        <div style="font-size:11px;color:#9ca3af;font-family:'IBM Plex Mono',monospace">${a.t}</div>
+        <span class="ib-badge ${svc(a.sv)}" style="margin-top:3px">${a.sv}</span>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:#111">${a.type}</div>
+        <div style="font-size:12px;color:#9ca3af;font-family:'IBM Plex Mono',monospace;margin-top:2px">${a.raw}</div>
+        ${eb}
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        ${a.ok?'<span class="ib-badge bg">Enriched</span>':'<span class="ib-badge bgr">Pending</span>'}
+        <span class="ib-ei" id="ei-${a.id}">▼</span>
+      </div>
+    </div>`;
+  }).join("");
+}
+function tgAlert(id){
+  const el=document.getElementById("iad-"+id);const ic=document.getElementById("ei-"+id);
+  const o=el.classList.toggle("io");ic.style.transform=o?"rotate(180deg)":"";
+}
+
+const AN=[
+  {id:1,sv:"critical",sso:"dchen",name:"David Chen",rule:"Impossible travel — no badge in + remote VPN",detail:"VPN login from 203.0.113.55 at 06:31. No badge entry today. Last physical access was yesterday 17:44. Time delta makes physical presence impossible.",tl:[{t:"Yesterday 17:44",e:"Badge exit — Main Exit",c:"#3b82f6"},{t:"Today 06:31",e:"SSO VPN login — external IP",c:"#ef4444"},{t:"Today 08:00",e:"No badge entry recorded",c:"#9ca3af"}],risk:95,av:"ap"},
+  {id:2,sv:"critical",sso:"tnguy",name:"Thomas Nguyen",rule:"Account active — 3-day physical absence",detail:"Last badge scan 3 days ago. SSO login attempted today from unknown IP. Badge shows inactive status.",tl:[{t:"3 days ago 16:22",e:"Badge exit — last recorded entry",c:"#3b82f6"},{t:"Today 08:10",e:"SSO login attempt from 198.51.100.7",c:"#ef4444"}],risk:88,av:"aa"},
+  {id:3,sv:"warning",sso:"jsmith",name:"John Smith",rule:"Repeated auth failures — physical presence confirmed",detail:"7 failed SSO attempts in 4 minutes. User physically present (badged in 08:47). Likely locked account.",tl:[{t:"08:47",e:"Badge entry — Main Entrance",c:"#3b82f6"},{t:"09:44",e:"7 failed SSO attempts — WS-114",c:"#f59e0b"}],risk:42,av:"ab"},
+  {id:4,sv:"warning",sso:"mramirez",name:"Maria Ramirez",rule:"VPN + badge in same time window",detail:"Remote VPN session active while badge scan shows on-premises. Possible stale session or shared credential.",tl:[{t:"07:55",e:"Badge entry — Parking Garage B",c:"#3b82f6"},{t:"08:10",e:"VPN session still active",c:"#f59e0b"},{t:"08:22",e:"Badge into NOC",c:"#3b82f6"}],risk:31,av:"at"}
+];
+function rc(r){return r>80?"#dc2626":r>50?"#d97706":"#16a34a"}
+function renderAnoms(){
+  document.getElementById("ibanf").innerHTML=AN.map(a=>`<div class="ib-anr" onclick="tgAnom(${a.id})">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="ib-row" style="gap:10px">
+        <div class="ib-av ${a.av}" style="width:32px;height:32px;font-size:11px">${D.find(u=>u.sso===a.sso)?.photo||"?"}</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#111;font-family:'Syne',sans-serif">${a.name} <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9ca3af">${a.sso}</span></div>
+          <div style="font-size:12px;color:#9ca3af">${a.rule}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span class="ib-badge ${a.sv==="critical"?"br":"ba"}">${a.sv}</span>
+        <span style="font-size:12px;font-weight:600;color:${rc(a.risk)};font-family:'IBM Plex Mono',monospace">${a.risk}%</span>
+        <span class="ib-ei" id="aei-${a.id}">▼</span>
+      </div>
+    </div>
+    <div class="ib-sb" style="background:${rc(a.risk)};width:${a.risk}%"></div>
+    <div class="ib-ad" id="aad-${a.id}" style="margin-left:0;margin-top:10px">
+      <div style="font-size:13px;margin-bottom:10px">${a.detail}</div>
+      <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;font-family:'IBM Plex Mono',monospace">Event timeline</div>
+      <div class="ib-tl">${a.tl.map(t=>`<div class="ib-ti"><div class="ib-td" style="background:${t.c}"></div><div><span style="color:#9ca3af">${t.t}</span> — ${t.e}</div></div>`).join("")}</div>
+    </div>
+  </div>`).join("");
+}
+function tgAnom(id){
+  const el=document.getElementById("aad-"+id);const ic=document.getElementById("aei-"+id);
+  const o=el.classList.toggle("io");ic.style.transform=o?"rotate(180deg)":"";
+}
+function ibTab(id,btn){
+  document.querySelectorAll(".ib-s").forEach(s=>s.classList.remove("ion"));
+  document.querySelectorAll(".ib-nav button").forEach(b=>b.classList.remove("ia"));
+  document.getElementById("ib-"+id).classList.add("ion");
+  btn.classList.add("ia");
+}
+
+renderAlerts();renderAnoms();
+
+// Custom cursor
+const cur=document.getElementById("cur"),curR=document.getElementById("curR");
+document.addEventListener("mousemove",e=>{
+  cur.style.left=e.clientX+"px";cur.style.top=e.clientY+"px";
+  curR.style.left=e.clientX+"px";curR.style.top=e.clientY+"px";
+});
+
+// Scroll reveal
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add("visible")});
+},{threshold:.12});
+document.querySelectorAll(".reveal").forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
